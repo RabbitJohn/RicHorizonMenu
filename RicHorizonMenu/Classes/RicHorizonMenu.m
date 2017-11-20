@@ -14,6 +14,7 @@
 
 @interface RicHorizonMenu ()<RicHorizonMenuItemDelegate,UICollectionViewDelegate,UICollectionViewDataSource>
 
+@property (nonatomic, assign) BOOL supportExpand;
 @property (nonatomic, strong) UIView *scrollBG;
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) RicExpandBtn *expandBtn;
@@ -54,29 +55,45 @@
 
 static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMenuReusedContentCellIdentify___";
 
-
 @implementation RicHorizonMenu
 
-- (instancetype)initWithFrame:(CGRect)frame{
+- (void)setUpWithFrame:(CGRect)frame{
+    self.scrollBG = [[UIView alloc] init];
+    [self addSubview:self.scrollBG];
+    self.cells = [NSMutableArray new];
+    self.menuItems = [NSMutableArray new];
+    self.columnCount = screenWidth > 320.0f ? 5 : 4;
+    self.expandHeight = screenHeight - 64.0f;
     
-    self = [super initWithFrame:frame];
+    CGFloat offset = self.supportExpand ? 36 : 0;
     
-    if(self){
-        self.scrollBG = [[UIView alloc] init];
-        [self addSubview:self.scrollBG];
-        self.cells = [NSMutableArray new];
-        self.menuItems = [NSMutableArray new];
-        self.columnCount = screenWidth > 320.0f ? 5 : 4;
-        self.expandHeight = screenHeight - 64.0f;
-        
-        self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(7.0f, 0.0f, screenWidth-36.0f, self.shrinkHeight)];
-        self.scrollView.backgroundColor = [UIColor whiteColor];
-        self.scrollView.showsHorizontalScrollIndicator = NO;
-        self.scrollView.showsVerticalScrollIndicator = NO;
-        self.scrollBG.frame = CGRectMake(0.0, 0.0f, screenWidth, CGRectGetHeight(self.scrollView.frame));
-        [self addSubview:self.scrollView];
+    self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(7.0f, 0.0f, screenWidth-offset, self.shrinkHeight)];
+    self.scrollView.backgroundColor = [UIColor whiteColor];
+    self.scrollView.showsHorizontalScrollIndicator = NO;
+    self.scrollView.showsVerticalScrollIndicator = NO;
+    self.scrollBG.frame = CGRectMake(0.0, 0.0f, screenWidth, CGRectGetHeight(self.scrollView.frame));
+    [self addSubview:self.scrollView];
+    CGFloat contentViewHeight = screenHeight - 64.0f - self.shrinkHeight;
+    
+    UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
+    layout.minimumInteritemSpacing = 0.0f;
+    layout.minimumLineSpacing = 0.0f;
+    layout.sectionInset = UIEdgeInsetsZero;
+    layout.itemSize = CGSizeMake(screenWidth, contentViewHeight);
+    layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+    
+    self.contentCollectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, self.shrinkHeight, screenWidth,contentViewHeight) collectionViewLayout:layout];
+    self.contentCollectionView.delegate = self;
+    self.contentCollectionView.dataSource = self;
+    self.contentCollectionView.backgroundColor = [UIColor clearColor];
+    self.contentCollectionView.showsVerticalScrollIndicator = NO;
+    self.contentCollectionView.showsHorizontalScrollIndicator = NO;
+    self.contentCollectionView.pagingEnabled = YES;
+    [self.contentCollectionView registerClass:[RicHorizonMenuContentCell class] forCellWithReuseIdentifier:RicHorizonMenuReusedContentCellIdentify___];
+    
+    [self addSubview:self.contentCollectionView];
+    if(self.supportExpand){
         self.scrollBG.backgroundColor = self.scrollView.backgroundColor;
-        
         self.expandBtn = [RicExpandBtn new];
         self.expandBtn.touchAreaRadius = 50.0f;
         self.expandBtn.frame = CGRectMake(screenWidth-23.5f, 20.0f, 13.5f, 7.5f);
@@ -89,26 +106,6 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
         [self.scrollView addSubview:self.bottomLine];
         
         self.highlightedRect = CGRectMake(19, 0.0f, 30.0f, 45.0f);
-        
-        CGFloat contentViewHeight = screenHeight - 64.0f - self.shrinkHeight;
-        
-        UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-        layout.minimumInteritemSpacing = 0.0f;
-        layout.minimumLineSpacing = 0.0f;
-        layout.sectionInset = UIEdgeInsetsZero;
-        layout.itemSize = CGSizeMake(screenWidth, contentViewHeight);
-        layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-        
-        self.contentCollectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, self.shrinkHeight, screenWidth,contentViewHeight) collectionViewLayout:layout];
-        self.contentCollectionView.delegate = self;
-        self.contentCollectionView.dataSource = self;
-        self.contentCollectionView.backgroundColor = [UIColor clearColor];
-        self.contentCollectionView.showsVerticalScrollIndicator = NO;
-        self.contentCollectionView.showsHorizontalScrollIndicator = NO;
-        self.contentCollectionView.pagingEnabled = YES;
-        [self.contentCollectionView registerClass:[RicHorizonMenuContentCell class] forCellWithReuseIdentifier:RicHorizonMenuReusedContentCellIdentify___];
-        
-        [self addSubview:self.contentCollectionView];
         [self bringSubviewToFront:self.scrollBG];
         [self bringSubviewToFront:self.scrollView];
         [self bringSubviewToFront:self.expandBtn];
@@ -117,6 +114,31 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
         self.mask.backgroundColor = [UIColor whiteColor];
         self.mask.hidden = YES;
         [self.contentCollectionView addSubview:self.mask];
+    }
+}
+
+- (void)updateExtendProperties:(CGFloat)expandHeight menuBackgroundColor:(UIColor *)bgColor tagNormalColor:(UIColor *)tagNormalColor tagHighlightedColor:(UIColor *)tagHighlightedColor{
+    self.expandHeight = expandHeight;
+    self.menuBackgroundColor = bgColor;
+    self.tagNormalColor = tagNormalColor;
+    self.tagHighlightedColor = tagHighlightedColor;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand{
+    self = [super initWithFrame:frame];
+    if(self){
+        self.supportExpand = supportExpand;
+        [self setUpWithFrame:frame];
+    }
+    return self;
+}
+- (instancetype)initWithFrame:(CGRect)frame{
+    
+    self = [super initWithFrame:frame];
+    
+    if(self){
+        self.supportExpand = YES;
+        [self setUpWithFrame:frame];
     }
     return self;
 }
@@ -325,15 +347,19 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
                 if(CGRectGetMaxX(nextCell.frame) >= self.scrollView.contentOffset.x+CGRectGetWidth(self.scrollView.frame)){
                     CGPoint startPoint = CGPointMake(self.scrollView.contentOffset.x+30.0f+self.horizonGap, self.scrollView.contentOffset.y);
                     [self.scrollView setContentOffset:startPoint animated:YES];
+                }else{
+                    [self.scrollView scrollRectToVisible:nextCell.frame animated:YES];
                 }
             }
         }
         else {
             if (index-1 >= 0){
                 RicHorizonMenuItemCell *lastCell = self.cells[index-1];
-                if(CGRectGetMinX(lastCell.frame)<self.scrollView.contentOffset.x){
+            if(CGRectGetMinX(lastCell.frame)<self.scrollView.contentOffset.x){
                     CGPoint startPoint = CGPointMake(lastCell.frame.origin.x-19, self.scrollView.contentOffset.y);
                     [self.scrollView setContentOffset:startPoint animated:YES];
+                }else{
+                    [self.scrollView scrollRectToVisible:lastCell.frame animated:YES];
                 }
             }
         }

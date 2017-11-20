@@ -25,6 +25,8 @@
 /// 全部小组筛选
 @interface RicHorizonMenu : UIView
 
+@property (nonatomic, assign, readonly) BOOL supportExpand;
+
 @property (nonatomic, weak) id <RicHorizonMenuDelegate> delegate;
 
 @property (nonatomic, strong) NSArray <id <RicHorizonMenuItemDataSource>>*menus;
@@ -39,5 +41,9 @@
 @property (nonatomic, strong) UIColor *tagNormalColor;
 @property (nonatomic, strong) UIColor *tagHighlightedColor;
 @property (nonatomic, strong) UIColor *maskColor;
+
+- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand;
+
+- (void)updateExtendProperties:(CGFloat)expandHeight menuBackgroundColor:(UIColor *)bgColor tagNormalColor:(UIColor *)tagNormalColor tagHighlightedColor:(UIColor *)tagHighlightedColor;
 
 @end

@@ -36,12 +36,13 @@
     RicCityDistrictionModel *allZone = [RicCityDistrictionModel new];
     allZone.name = @"所有";
     [theZones insertObject:allZone atIndex:0];
-    RicHorizonMenu *menu = [[RicHorizonMenu alloc] initWithFrame:CGRectMake(0, 64.0f, CGRectGetWidth(self.view.bounds), CGRectGetHeight(self.view.bounds)-64.0f)];
-    menu.expandHeight = CGRectGetHeight(self.view.bounds)-64.0f;
-    menu.menuBackgroundColor = [UIColor whiteColor];
-    menu.tagNormalColor = [UIColor lightGrayColor];
-    menu.tagHighlightedColor = [UIColor redColor];
+    
+    RicHorizonMenu *menu = [[RicHorizonMenu alloc] initWithFrame:CGRectMake(0, 64.0f, CGRectGetWidth(self.view.bounds), CGRectGetHeight(self.view.bounds)-64.0f) supportExpand:YES];
+    
+    [menu updateExtendProperties:CGRectGetHeight(self.view.bounds)-64.0f menuBackgroundColor:[UIColor whiteColor] tagNormalColor:[UIColor lightGrayColor] tagHighlightedColor:[UIColor redColor]];
+    
     menu.menus = theZones;
+    
     [self.view addSubview:menu];
     
     
