@@ -2,7 +2,7 @@
 //  AppDelegate.h
 //  RicHorizonMenu
 //
-//  Created by 张礼焕 on 16/6/2.
+//  Created by rice on 16/6/2.
 //
 //
 

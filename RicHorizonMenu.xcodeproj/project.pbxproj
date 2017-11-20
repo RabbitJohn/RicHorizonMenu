@@ -13,6 +13,16 @@
 		133B55C11D0019EA00A5759C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 133B55BF1D0019EA00A5759C /* Main.storyboard */; };
 		133B55C31D0019EA00A5759C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 133B55C21D0019EA00A5759C /* Assets.xcassets */; };
 		133B55C61D0019EA00A5759C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 133B55C41D0019EA00A5759C /* LaunchScreen.storyboard */; };
+		133B55D21D001A0B00A5759C /* RicHorizonMenuItemCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 133B55CF1D001A0B00A5759C /* RicHorizonMenuItemCell.m */; };
+		133B55D31D001A0B00A5759C /* RicHorizonMenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 133B55D11D001A0B00A5759C /* RicHorizonMenu.m */; };
+		133B55D61D001A4700A5759C /* RicExpandBtn.m in Sources */ = {isa = PBXBuildFile; fileRef = 133B55D51D001A4700A5759C /* RicExpandBtn.m */; };
+		133B55D91D001EA700A5759C /* RicHorizonMenuContentCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 133B55D81D001EA700A5759C /* RicHorizonMenuContentCell.m */; };
+		133B55DC1D002B4F00A5759C /* RicHorizonMenuTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 133B55DB1D002B4F00A5759C /* RicHorizonMenuTableView.m */; };
+		133B55E31D00322A00A5759C /* RicBaseModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 133B55E01D00322A00A5759C /* RicBaseModel.m */; };
+		133B55E41D00322A00A5759C /* RicCityDistrictionModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 133B55E21D00322A00A5759C /* RicCityDistrictionModel.m */; };
+		13A04FFA1D004C79001EE86B /* resource.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13A04FF91D004C79001EE86B /* resource.xcassets */; };
+		13A050011D005867001EE86B /* RicHorizonMenuItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 13A050001D005867001EE86B /* RicHorizonMenuItem.m */; };
+		13E3DD4A1D02BFE300F8876E /* zone.json in Resources */ = {isa = PBXBuildFile; fileRef = 13E3DD491D02BFE300F8876E /* zone.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +36,25 @@
 		133B55C21D0019EA00A5759C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		133B55C51D0019EA00A5759C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		133B55C71D0019EA00A5759C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		133B55CE1D001A0B00A5759C /* RicHorizonMenuItemCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicHorizonMenuItemCell.h; sourceTree = "<group>"; };
+		133B55CF1D001A0B00A5759C /* RicHorizonMenuItemCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicHorizonMenuItemCell.m; sourceTree = "<group>"; };
+		133B55D01D001A0B00A5759C /* RicHorizonMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicHorizonMenu.h; sourceTree = "<group>"; };
+		133B55D11D001A0B00A5759C /* RicHorizonMenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicHorizonMenu.m; sourceTree = "<group>"; };
+		133B55D41D001A4700A5759C /* RicExpandBtn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicExpandBtn.h; sourceTree = "<group>"; };
+		133B55D51D001A4700A5759C /* RicExpandBtn.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicExpandBtn.m; sourceTree = "<group>"; };
+		133B55D71D001EA700A5759C /* RicHorizonMenuContentCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicHorizonMenuContentCell.h; sourceTree = "<group>"; };
+		133B55D81D001EA700A5759C /* RicHorizonMenuContentCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicHorizonMenuContentCell.m; sourceTree = "<group>"; };
+		133B55DA1D002B4F00A5759C /* RicHorizonMenuTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicHorizonMenuTableView.h; sourceTree = "<group>"; };
+		133B55DB1D002B4F00A5759C /* RicHorizonMenuTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicHorizonMenuTableView.m; sourceTree = "<group>"; };
+		133B55E01D00322A00A5759C /* RicBaseModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicBaseModel.m; sourceTree = "<group>"; };
+		133B55E11D00322A00A5759C /* RicCityDistrictionModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicCityDistrictionModel.h; sourceTree = "<group>"; };
+		133B55E21D00322A00A5759C /* RicCityDistrictionModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicCityDistrictionModel.m; sourceTree = "<group>"; };
+		13A04FF91D004C79001EE86B /* resource.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = resource.xcassets; sourceTree = "<group>"; };
+		13A04FFF1D005867001EE86B /* RicHorizonMenuItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicHorizonMenuItem.h; sourceTree = "<group>"; };
+		13A050001D005867001EE86B /* RicHorizonMenuItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RicHorizonMenuItem.m; sourceTree = "<group>"; };
+		13A050021D00592F001EE86B /* RicHorizonMenuItemCellDataSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RicHorizonMenuItemCellDataSource.h; sourceTree = "<group>"; };
+		13E3DD481D02BF9F00F8876E /* RicBaseModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RicBaseModel.h; sourceTree = "<group>"; };
+		13E3DD491D02BFE300F8876E /* zone.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = zone.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +87,9 @@
 		133B55B51D0019EA00A5759C /* RicHorizonMenu */ = {
 			isa = PBXGroup;
 			children = (
+				13E3DD491D02BFE300F8876E /* zone.json */,
+				133B55DE1D00320900A5759C /* Others */,
+				133B55CD1D001A0B00A5759C /* Classes */,
 				133B55B91D0019EA00A5759C /* AppDelegate.h */,
 				133B55BA1D0019EA00A5759C /* AppDelegate.m */,
 				133B55BC1D0019EA00A5759C /* ViewController.h */,
@@ -67,6 +99,7 @@
 				133B55C41D0019EA00A5759C /* LaunchScreen.storyboard */,
 				133B55C71D0019EA00A5759C /* Info.plist */,
 				133B55B61D0019EA00A5759C /* Supporting Files */,
+				13A04FF91D004C79001EE86B /* resource.xcassets */,
 			);
 			path = RicHorizonMenu;
 			sourceTree = "<group>";
@@ -77,6 +110,37 @@
 				133B55B71D0019EA00A5759C /* main.m */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		133B55CD1D001A0B00A5759C /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				13A04FFF1D005867001EE86B /* RicHorizonMenuItem.h */,
+				13A050001D005867001EE86B /* RicHorizonMenuItem.m */,
+				133B55D41D001A4700A5759C /* RicExpandBtn.h */,
+				133B55D51D001A4700A5759C /* RicExpandBtn.m */,
+				133B55CE1D001A0B00A5759C /* RicHorizonMenuItemCell.h */,
+				133B55CF1D001A0B00A5759C /* RicHorizonMenuItemCell.m */,
+				133B55D01D001A0B00A5759C /* RicHorizonMenu.h */,
+				133B55D11D001A0B00A5759C /* RicHorizonMenu.m */,
+				133B55D71D001EA700A5759C /* RicHorizonMenuContentCell.h */,
+				133B55D81D001EA700A5759C /* RicHorizonMenuContentCell.m */,
+				133B55DA1D002B4F00A5759C /* RicHorizonMenuTableView.h */,
+				133B55DB1D002B4F00A5759C /* RicHorizonMenuTableView.m */,
+				13A050021D00592F001EE86B /* RicHorizonMenuItemCellDataSource.h */,
+			);
+			path = Classes;
+			sourceTree = "<group>";
+		};
+		133B55DE1D00320900A5759C /* Others */ = {
+			isa = PBXGroup;
+			children = (
+				13E3DD481D02BF9F00F8876E /* RicBaseModel.h */,
+				133B55E01D00322A00A5759C /* RicBaseModel.m */,
+				133B55E11D00322A00A5759C /* RicCityDistrictionModel.h */,
+				133B55E21D00322A00A5759C /* RicCityDistrictionModel.m */,
+			);
+			path = Others;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -138,6 +202,8 @@
 				133B55C61D0019EA00A5759C /* LaunchScreen.storyboard in Resources */,
 				133B55C31D0019EA00A5759C /* Assets.xcassets in Resources */,
 				133B55C11D0019EA00A5759C /* Main.storyboard in Resources */,
+				13E3DD4A1D02BFE300F8876E /* zone.json in Resources */,
+				13A04FFA1D004C79001EE86B /* resource.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,7 +214,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				133B55D91D001EA700A5759C /* RicHorizonMenuContentCell.m in Sources */,
 				133B55BE1D0019EA00A5759C /* ViewController.m in Sources */,
+				133B55D21D001A0B00A5759C /* RicHorizonMenuItemCell.m in Sources */,
+				133B55DC1D002B4F00A5759C /* RicHorizonMenuTableView.m in Sources */,
+				133B55D31D001A0B00A5759C /* RicHorizonMenu.m in Sources */,
+				133B55E41D00322A00A5759C /* RicCityDistrictionModel.m in Sources */,
+				13A050011D005867001EE86B /* RicHorizonMenuItem.m in Sources */,
+				133B55D61D001A4700A5759C /* RicExpandBtn.m in Sources */,
+				133B55E31D00322A00A5759C /* RicBaseModel.m in Sources */,
 				133B55BB1D0019EA00A5759C /* AppDelegate.m in Sources */,
 				133B55B81D0019EA00A5759C /* main.m in Sources */,
 			);
@@ -301,6 +375,7 @@
 				133B55CC1D0019EA00A5759C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
