@@ -9,39 +9,33 @@
 #import "RicHorizonMenu.h"
 #import "RicExpandBtn.h"
 #import "RicHorizonMenuItemCell.h"
-#import "RicHorizonMenuContentCell.h"
 #import "RicHorizonMenuItem.h"
+#import <WZLBadge/WZLBadgeImport.h>
 
-@interface RicHorizonMenu ()<RicHorizonMenuItemDelegate,UICollectionViewDelegate,UICollectionViewDataSource>
+@interface RicHorizonMenu ()<HorizonMenuItemDelegate,UIScrollViewDelegate>
 
+@property (nonatomic, strong) UIViewController *parentVC;
 @property (nonatomic, assign) BOOL supportExpand;
-@property (nonatomic, strong) UIView *scrollBG;
 @property (nonatomic, strong) UIScrollView *scrollView;
-@property (nonatomic, strong) RicExpandBtn *expandBtn;
-@property (nonatomic, readonly) CGFloat collectionViewExpandHeight;
 @property (nonatomic, readonly) CGFloat shrinkHeight;
 @property (nonatomic, readonly) CGFloat cellHeight;
 @property (nonatomic, readonly) NSInteger rowsCount;
 @property (nonatomic, readonly) NSString *reusedCellId;
 @property (nonatomic, strong) NSMutableArray <RicHorizonMenuItemCell *>*cells;
 @property (nonatomic, strong) NSMutableArray <RicHorizonMenuItem *>*menuItems;
-@property (nonatomic, assign) BOOL isExpand;
 @property (nonatomic, strong) UIView *bottomLine;
 @property (nonatomic, assign) CGRect highlightedRect;
 @property (nonatomic, assign) NSInteger lastSelectedIndex;
 @property (nonatomic, assign) NSInteger currentSelectedIndex;
-@property (nonatomic, readonly) CGFloat horizonGap;
+@property (nonatomic, assign) CGFloat itemWidth;
+@property (nonatomic, assign) CGFloat contentViewHeight;
+@property (nonatomic, strong) UIScrollView *contentCollectionView;
+@property (nonatomic, strong) NSMutableDictionary <NSString *,UIViewController *>*containerViews;
+@property (nonatomic, assign) UITableViewStyle tableViewStyle;
 
-@property (nonatomic, strong) UICollectionView *contentCollectionView;
-
-@property (nonatomic, strong) UIView *mask;
-
-/**
- 每行的数量
- */
-@property (nonatomic, assign) NSInteger columnCount;
-
-- (void)shrinkOrExpand;
+@property (nonatomic, assign) BOOL isClickBtn;
+/// 记录刚开始时的偏移量
+@property (nonatomic, assign) NSInteger startOffsetX;
 
 @end
 
@@ -57,81 +51,92 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
 
 @implementation RicHorizonMenu
 
++ (RicHorizonMenu *)menuWithJsonFile:(NSString *)jsonFileConfig contentViewHeight:(CGFloat)contentViewHeight contentViewStyle:(UITableViewStyle)tableViewStyle delegate:(id <RicHorizonMenuDelegate>)delegate parentVC:(UIViewController *)parentVC{
+    
+    NSMutableArray *itemValues = nil;
+    
+    if(jsonFileConfig){
+        NSData *orderStatusTypesData = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:jsonFileConfig ofType:@"json"]]];
+        NSArray *orderStatusTypes = [NSJSONSerialization JSONObjectWithData:orderStatusTypesData options:NSJSONReadingMutableContainers error:nil];
+        
+        itemValues = [NSMutableArray new];
+        
+        for(NSDictionary *dic in orderStatusTypes)
+        {
+            RicHorizonMenuItem *itemValue = [RicHorizonMenuItem new];
+            [itemValue setValuesForKeysWithDictionary:dic];
+            [itemValues addObject:itemValue];
+        }
+    }
+    
+    RicHorizonMenu *menu = [[RicHorizonMenu alloc] initWithFrame:CGRectMake(0, 0, screenWidth, [RicHorizonMenu menuHeight] + contentViewHeight) supportExpand:NO itemValues:itemValues contentViewHeight:contentViewHeight contentViewStyle:tableViewStyle delegate:delegate parentVC:parentVC];
+    
+    [menu updateExtendProperties:contentViewHeight menuBackgroundColor:[UIColor whiteColor] tagNormalColor:[UIColor darkGrayColor] tagHighlightedColor:[UIColor blueColor]];
+    
+    return menu;
+}
+
 - (void)setUpWithFrame:(CGRect)frame{
-    self.scrollBG = [[UIView alloc] init];
-    [self addSubview:self.scrollBG];
     self.cells = [NSMutableArray new];
     self.menuItems = [NSMutableArray new];
-    self.columnCount = screenWidth > 320.0f ? 5 : 4;
-    self.expandHeight = screenHeight - 64.0f;
     
-    CGFloat offset = self.supportExpand ? 36 : 0;
-    
-    self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(7.0f, 0.0f, screenWidth-offset, self.shrinkHeight)];
+    self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0.0f, screenWidth, self.shrinkHeight)];
     self.scrollView.backgroundColor = [UIColor whiteColor];
     self.scrollView.showsHorizontalScrollIndicator = NO;
     self.scrollView.showsVerticalScrollIndicator = NO;
-    self.scrollBG.frame = CGRectMake(0.0, 0.0f, screenWidth, CGRectGetHeight(self.scrollView.frame));
     [self addSubview:self.scrollView];
-    CGFloat contentViewHeight = screenHeight - 64.0f - self.shrinkHeight;
     
-    UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-    layout.minimumInteritemSpacing = 0.0f;
-    layout.minimumLineSpacing = 0.0f;
-    layout.sectionInset = UIEdgeInsetsZero;
-    layout.itemSize = CGSizeMake(screenWidth, contentViewHeight);
-    layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-    
-    self.contentCollectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, self.shrinkHeight, screenWidth,contentViewHeight) collectionViewLayout:layout];
+    self.contentCollectionView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, screenWidth,CGRectGetHeight(self.bounds))];
     self.contentCollectionView.delegate = self;
-    self.contentCollectionView.dataSource = self;
-    self.contentCollectionView.backgroundColor = [UIColor clearColor];
+    self.contentCollectionView.backgroundColor = self.backgroundColor;
     self.contentCollectionView.showsVerticalScrollIndicator = NO;
     self.contentCollectionView.showsHorizontalScrollIndicator = NO;
     self.contentCollectionView.pagingEnabled = YES;
-    [self.contentCollectionView registerClass:[RicHorizonMenuContentCell class] forCellWithReuseIdentifier:RicHorizonMenuReusedContentCellIdentify___];
+    self.contentCollectionView.alwaysBounceHorizontal = YES;
+    self.contentCollectionView.bouncesZoom = NO;
     
     [self addSubview:self.contentCollectionView];
-    if(self.supportExpand){
-        self.scrollBG.backgroundColor = self.scrollView.backgroundColor;
-        self.expandBtn = [RicExpandBtn new];
-        self.expandBtn.touchAreaRadius = 50.0f;
-        self.expandBtn.frame = CGRectMake(screenWidth-23.5f, 20.0f, 13.5f, 7.5f);
-        [self.expandBtn setImage:[UIImage imageNamed:@"ic_details_down_arrows"] forState:UIControlStateNormal];
-        [self.expandBtn addTarget:self action:@selector(shrinkOrExpand) forControlEvents:UIControlEventTouchUpInside];
-        [self addSubview:self.expandBtn];
-        
-        self.bottomLine = [[UIView alloc] initWithFrame:CGRectMake(19.0f, 45.0f, 30.0f, 1.0f)];
-        self.bottomLine.backgroundColor = [UIColor redColor];
-        [self.scrollView addSubview:self.bottomLine];
-        
-        self.highlightedRect = CGRectMake(19, 0.0f, 30.0f, 45.0f);
-        [self bringSubviewToFront:self.scrollBG];
-        [self bringSubviewToFront:self.scrollView];
-        [self bringSubviewToFront:self.expandBtn];
-        
-        self.mask = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.bounds), self.expandHeight - self.shrinkHeight)];
-        self.mask.backgroundColor = [UIColor whiteColor];
-        self.mask.hidden = YES;
-        [self.contentCollectionView addSubview:self.mask];
-    }
+    
+    self.highlightedRect = CGRectMake(19, 0.0f, self.itemWidth, [RicHorizonMenu menuHeight]);
+    [self bringSubviewToFront:self.scrollView];
+    self.bottomLine = [[UIView alloc] initWithFrame:CGRectMake(19.0f, [RicHorizonMenu menuHeight]-1, self.itemWidth, 1.0f)];
+    
+    self.bottomLine.backgroundColor = [UIColor blueColor];
+    self.bottomLine.hidden = NO;
+    [self.scrollView addSubview:self.bottomLine];
 }
 
-- (void)updateExtendProperties:(CGFloat)expandHeight menuBackgroundColor:(UIColor *)bgColor tagNormalColor:(UIColor *)tagNormalColor tagHighlightedColor:(UIColor *)tagHighlightedColor{
-    self.expandHeight = expandHeight;
+- (void)updateExtendProperties:(CGFloat)contentHeight menuBackgroundColor:(UIColor *)bgColor tagNormalColor:(UIColor *)tagNormalColor tagHighlightedColor:(UIColor *)tagHighlightedColor{
+    self.contentHeight = contentHeight;
     self.menuBackgroundColor = bgColor;
     self.tagNormalColor = tagNormalColor;
     self.tagHighlightedColor = tagHighlightedColor;
 }
 
-- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand{
+- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand contentViewHeight:(CGFloat)contentViewHeight contentViewStyle:(UITableViewStyle)tableViewStyle delegate:(id <RicHorizonMenuDelegate>)delegate parentVC:(UIViewController *)parentVC{
     self = [super initWithFrame:frame];
     if(self){
+        self.parentVC = parentVC;
+        self.delegate = delegate;
+        self.currentSelectedIndex = -1;
+        self.contentViewHeight = contentViewHeight;
         self.supportExpand = supportExpand;
         [self setUpWithFrame:frame];
+        self.tableViewStyle = tableViewStyle;
+        self.containerViewInsets = UIEdgeInsetsZero;
+        self.isClickBtn = NO;
     }
     return self;
 }
+
+- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand itemValues:(NSArray <id <RicHorizonMenuItemDataSource>>*)itemValues contentViewHeight:(CGFloat)contentViewHeight contentViewStyle:(UITableViewStyle)tableViewStyle delegate:(id <RicHorizonMenuDelegate>)delegate parentVC:(UIViewController *)parentVC{
+    self = [[RicHorizonMenu alloc] initWithFrame:frame supportExpand:supportExpand contentViewHeight:contentViewHeight contentViewStyle:tableViewStyle delegate:delegate parentVC:(UIViewController *)parentVC];
+    if(self){
+        self.menus = [itemValues mutableCopy];
+    }
+    return self;
+}
+
 - (instancetype)initWithFrame:(CGRect)frame{
     
     self = [super initWithFrame:frame];
@@ -142,63 +147,44 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
     }
     return self;
 }
-
-#pragma mark -logic for collectionView.
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
-    return 1;
+- (void)setBackgroundColor:(UIColor *)backgroundColor{
+    [super setBackgroundColor:backgroundColor];
+    self.contentCollectionView.backgroundColor = backgroundColor;
 }
-
-- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
-    return self.menus.count;
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
+    self.isClickBtn = NO;
 }
-
-// The cell that is returned must be retrieved from a call to -dequeueReusableCellWithReuseIdentifier:forIndexPath:
-- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
-    
-    RicHorizonMenuContentCell *riCell = (RicHorizonMenuContentCell *)[collectionView dequeueReusableCellWithReuseIdentifier:RicHorizonMenuReusedContentCellIdentify___ forIndexPath:indexPath];
-    
-    riCell.menuIdx = indexPath.item;
-    riCell.tableView.backgroundColor = [UIColor colorWithRed:(random()%255)*1.0f/255.0f green:(random()%255)*1.0f/255.0f blue:(random()%255)*1.0f/255.0f alpha:1];
-    if(self.delegate && [self.delegate respondsToSelector:@selector(configTableView:ofMenuIndex:)]){
-        [self.delegate configTableView:riCell.tableView ofMenuIndex:riCell.menuIdx];
-    }
-    return riCell;
-}
-
--(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
-    return  CGSizeMake(screenWidth,self.expandHeight);
-}
-
--(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
-{
-    UIEdgeInsets top = {0,0,0,0};
-    return top;
-}
-
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
     CGFloat width = CGRectGetWidth(scrollView.bounds);
-    if(width){
-        CGFloat x = scrollView.contentOffset.x;
-        
-        NSInteger idx = floor(x/width);
-        
-        [self clickedMenuItemAtIndex:idx];
+    CGFloat x = scrollView.contentOffset.x;
+    NSInteger idx = MAX(floor(x/width), 0);
+    [self clickedMenuItemAtIndex:idx];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    if(self.isClickBtn){
+        return;
     }
+    CGFloat maxX = MAX(0, (self.menuItems.count - 1) * CGRectGetWidth(self.scrollView.frame));
+    CGFloat currentOffsetX = MIN(MAX(scrollView.contentOffset.x, 0), maxX);
+    CGFloat scrollViewWidth = CGRectGetWidth(self.scrollView.frame);
+    CGRect bottomFrame = self.bottomLine.frame;
+    bottomFrame.origin.x = currentOffsetX/scrollViewWidth * CGRectGetWidth(bottomFrame);
+    self.bottomLine.frame = bottomFrame;
 }
 
-
+- (void)updateCurrentSelectedIndex:(NSUInteger)currentSelectedIndex{
+    if(currentSelectedIndex < self.menuItems.count){
+        [self clickedMenuItemAtIndex:currentSelectedIndex];
+    }
+    self.currentSelectedIndex = currentSelectedIndex;
+}
 #pragma mark - logic for top menu.
-- (void)setMaskColor:(UIColor *)maskColor
-{
-    _maskColor = maskColor;
-    self.mask.backgroundColor = maskColor;
-}
 - (void)setMenuBackgroundColor:(UIColor *)menuBackgroundColor
 {
     _menuBackgroundColor = menuBackgroundColor;
     self.scrollView.backgroundColor = _menuBackgroundColor;
-    self.scrollBG.backgroundColor = _menuBackgroundColor;
 }
 
 - (void)setTagNormalColor:(UIColor *)tagNormalColor
@@ -217,64 +203,14 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
     }];
 }
 
-- (void)shrinkOrExpand{
-    
-    self.isExpand = !self.isExpand;
-    
-    if(self.isExpand){
-        [UIView animateWithDuration:0.26f animations:^{
-            
-            CGFloat assumeHeight = self.collectionViewExpandHeight;
-            
-            CGFloat height =  assumeHeight> (screenHeight - 64.0f) ? (screenHeight - 64.0f) : assumeHeight;
-            
-            self.scrollView.frame = CGRectMake(CGRectGetMinX(self.scrollView.frame), CGRectGetMinY(self.scrollView.frame), CGRectGetWidth(self.scrollView.frame),height);
-            self.scrollBG.frame = CGRectMake(0.0, 0.0f, screenWidth, self.expandHeight);
-
-            self.scrollView.contentSize = CGSizeMake(CGRectGetWidth(self.scrollView.frame),  self.collectionViewExpandHeight);
-        } completion:^(BOOL finished) {
-            [self shuZhiPaiBan];
-            [self.scrollView scrollRectToVisible:self.highlightedRect animated:NO];
-        }];
-
-    }else{
-        [UIView animateWithDuration:0.26f animations:^{
-            self.scrollView.frame = CGRectMake(CGRectGetMinX(self.scrollView.frame), CGRectGetMinY(self.scrollView.frame), CGRectGetWidth(self.scrollView.frame), self.shrinkHeight);
-            self.scrollBG.frame = CGRectMake(0.0, 0.0f, screenWidth, self.shrinkHeight);
-            self.scrollView.contentSize = CGSizeMake(38+(30.0f+self.horizonGap)*_menus.count, self.shrinkHeight);
-            
-
-        } completion:^(BOOL finished) {
-            [self shuiPinPaiBan];
-            [self.scrollView scrollRectToVisible:self.highlightedRect animated:NO];
-            
-            [self selectOperationForIndex:self.currentSelectedIndex];
-        }];
-    }
-    [self.expandBtn setImage:[UIImage imageNamed:self.isExpand ? @"ic_details_up_arrows":@"ic_details_down_arrows"] forState:UIControlStateNormal];
-}
-
 - (void)shuiPinPaiBan{
     
     for(int i=0; i<self.cells.count ; i++){
         RicHorizonMenuItemCell *cell = self.cells[i];
-        cell.frame = CGRectMake(19+i*(30+self.horizonGap), 0.0f, 30.0f, 45.0f);
+        cell.frame = CGRectMake(i*(self.itemWidth), 0.0f, self.itemWidth, [RicHorizonMenu menuHeight]);
         RicHorizonMenuItem *menuItem = self.menuItems[i];
         if(menuItem.isSelected){
-            self.bottomLine.frame = CGRectMake(CGRectGetMinX(cell.frame), 45.0f, 30.0f, 1.0f);
-            self.highlightedRect = cell.frame;
-        }
-    }
-}
-
-- (void)shuZhiPaiBan{
-    
-    for(int i=0; i<self.cells.count ; i++){
-        RicHorizonMenuItemCell *cell = self.cells[i];
-        cell.frame = CGRectMake(19+(i%self.columnCount)*(30+self.horizonGap), 45.0f * (i/self.columnCount),30, 45.0f);
-        RicHorizonMenuItem *item = self.menuItems[i];
-        if(item.isSelected){
-            self.bottomLine.frame = CGRectMake(CGRectGetMinX(cell.frame), CGRectGetMinY(cell.frame) + 45.0f, 30.0f, 1.0f);
+            self.bottomLine.frame = CGRectMake(CGRectGetMinX(cell.frame), CGRectGetMaxY(cell.frame)-1.0, self.itemWidth, 1.0f);
             self.highlightedRect = cell.frame;
         }
     }
@@ -283,6 +219,13 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
 - (void)setMenus:(NSArray<id<RicHorizonMenuItemDataSource>> *)menus
 {
     _menus = menus;
+    if(_menus.count > 0){
+        CGFloat maxVisableCount = MAX(1, MIN(_menus.count, 5));
+        self.itemWidth = (screenWidth - (MAX(_menus.count - 1, 0)))/maxVisableCount;
+        if(self.itemWidth == 0){
+            self.itemWidth = 120;
+        }
+    }
     [_menuItems removeAllObjects];
     for(int i=0;i<menus.count; i++)
     {
@@ -294,13 +237,19 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
         }
         [_menuItems addObject:menuItem];
     }
-    self.scrollView.contentSize = CGSizeMake(38+(30.0f+self.horizonGap)*_menuItems.count, self.shrinkHeight);
+    self.scrollView.contentSize = CGSizeMake((self.itemWidth)*_menuItems.count, self.shrinkHeight);
+    self.contentCollectionView.contentSize = CGSizeMake(_menuItems.count*CGRectGetWidth(self.bounds), CGRectGetHeight(self.bounds)-[RicHorizonMenu menuHeight]);
     for(UIView *cell in self.cells){
         [cell removeFromSuperview];
     }
+    if(!self.containerViews){
+        self.containerViews = [NSMutableDictionary new];
+    }else{
+        [self.containerViews removeAllObjects];
+    }
     [self.cells removeAllObjects];
     for(int i=0; i< _menus.count; i++){
-        RicHorizonMenuItemCell *cell = [[RicHorizonMenuItemCell alloc] init];
+        RicHorizonMenuItemCell *cell = [[RicHorizonMenuItemCell alloc] initWithFrame:CGRectMake(i*(self.itemWidth), 0, self.itemWidth, [RicHorizonMenu menuHeight])];
         cell.delegate = self;
         cell.index = i;
         cell.normalColor = self.tagNormalColor;
@@ -310,6 +259,17 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
         [self.cells addObject:cell];
     }
     [self shuiPinPaiBan];
+    [self scrollViewDidEndDecelerating:self.contentCollectionView];
+}
+
+- (void)setContainerViewInsets:(UIEdgeInsets)containerViewInsets{
+    _containerViewInsets = containerViewInsets;
+    if(self.containerViews.count > 0){
+        [self.containerViews enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, UIViewController*  _Nonnull aViewController, BOOL * _Nonnull stop) {
+            CGRect frame = CGRectMake(self->_containerViewInsets.left+CGRectGetMinX(aViewController.view.frame), self.containerViewInsets.top+CGRectGetMinY(aViewController.view.frame), CGRectGetWidth(aViewController.view.frame)-self.containerViewInsets.left-self.containerViewInsets.right, CGRectGetHeight(aViewController.view.bounds)-self.containerViewInsets.top-self.containerViewInsets.bottom);
+            aViewController.view.frame = frame;
+        }];
+    }
 }
 
 - (void)selectOperationForIndex:(NSInteger)index{
@@ -324,128 +284,163 @@ static NSString *RicHorizonMenuReusedContentCellIdentify___  =   @"RicHorizonMen
     }
     
     if(index < self.cells.count){
-        
         RicHorizonMenuItemCell *cell = self.cells[index];
-        if(self.isExpand){
-            self.bottomLine.frame = CGRectMake(CGRectGetMinX(cell.frame), CGRectGetMinY(cell.frame) + 45.0f, 30.0f, 1.0f);
-            [cell layoutIfNeeded];
-            [cell setNeedsLayout];
-            
-        }else{
+        if(self.currentSelectedIndex >= 0){
             [UIView animateWithDuration:0.26f animations:^{
                 [cell layoutIfNeeded];
                 [cell setNeedsLayout];
-                self.bottomLine.frame = CGRectMake(CGRectGetMinX(cell.frame), CGRectGetMinY(cell.frame) + 45.0f, 30.0f, 1.0f);
+                self.bottomLine.frame = CGRectMake(CGRectGetMinX(cell.frame), [RicHorizonMenu menuHeight]-1.0, self.itemWidth, 1.0f);
             }];
         }
     }
-    if(!self.isExpand){
-        
-        if(index >= self.lastSelectedIndex){
-            if(index+1 < self.cells.count){
-                RicHorizonMenuItemCell *nextCell = self.cells[index+1];
-                if(CGRectGetMaxX(nextCell.frame) >= self.scrollView.contentOffset.x+CGRectGetWidth(self.scrollView.frame)){
-                    CGPoint startPoint = CGPointMake(self.scrollView.contentOffset.x+30.0f+self.horizonGap, self.scrollView.contentOffset.y);
-                    [self.scrollView setContentOffset:startPoint animated:YES];
-                }else{
-                    [self.scrollView scrollRectToVisible:nextCell.frame animated:YES];
-                }
-            }
+    
+    if(index >= self.lastSelectedIndex){
+        //往右
+        NSInteger scrollToIndex = index;
+        if(index+1 < self.cells.count){
+            scrollToIndex = index + 1;
         }
-        else {
-            if (index-1 >= 0){
-                RicHorizonMenuItemCell *lastCell = self.cells[index-1];
-            if(CGRectGetMinX(lastCell.frame)<self.scrollView.contentOffset.x){
-                    CGPoint startPoint = CGPointMake(lastCell.frame.origin.x-19, self.scrollView.contentOffset.y);
-                    [self.scrollView setContentOffset:startPoint animated:YES];
-                }else{
-                    [self.scrollView scrollRectToVisible:lastCell.frame animated:YES];
-                }
-            }
+        RicHorizonMenuItemCell *nextCell = self.cells[scrollToIndex];
+        if(CGRectGetMaxX(nextCell.frame) >= self.scrollView.contentOffset.x+CGRectGetWidth(self.scrollView.frame)){
+            CGPoint startPoint = CGPointMake(self.scrollView.contentOffset.x+self.itemWidth, self.scrollView.contentOffset.y);
+            [self.scrollView setContentOffset:startPoint animated:YES];
+        }else{
+            [self.scrollView scrollRectToVisible:nextCell.frame animated:YES];
+        }
+    }
+    else {
+        //往左
+        NSInteger scrollToIndex = index;
+        if(index-1 >= 0){
+            scrollToIndex = index-1;
+        }
+        RicHorizonMenuItemCell *lastCell = self.cells[scrollToIndex];
+        if(CGRectGetMinX(lastCell.frame)<self.scrollView.contentOffset.x){
+            CGPoint startPoint = CGPointMake(lastCell.frame.origin.x, self.scrollView.contentOffset.y);
+            [self.scrollView setContentOffset:startPoint animated:YES];
+        }else{
+            [self.scrollView scrollRectToVisible:lastCell.frame animated:YES];
         }
     }
 }
 
+- (void)setLastSelectedIndex:(NSInteger)lastSelectedIndex{
+    if(self.delegate && self.lastSelectedIndex >= 0){
+        id<RicHorizonMenuItemDataSource>lastItem = nil;
+        if(self.menus.count > _lastSelectedIndex){
+            lastItem = self.menus[_lastSelectedIndex];
+        }
+    }
+    _lastSelectedIndex = lastSelectedIndex;
+}
 - (void)clickedMenuItemAtIndex:(NSInteger)index{
-    
-    if(index != self.currentSelectedIndex){
-        [self selectOperationForIndex:index];
-        
-        if(self.currentSelectedIndex != index && self.lastSelectedIndex != index){
-            self.lastSelectedIndex = index;
-        }
-        self.currentSelectedIndex = index;
-        CGFloat width = CGRectGetWidth(self.contentCollectionView.bounds);
-        [UIView beginAnimations:@"scrollViewAnimation" context:NULL];
-        self.contentCollectionView.contentOffset = CGPointMake(index * width, 0);
-        [UIView setAnimationWillStartSelector:@selector(showMask)];
-        [UIView setAnimationDidStopSelector:@selector(hideMask)];
-        [UIView setAnimationDelegate:self];
-        [UIView commitAnimations];
-        if(self.delegate && [self.delegate respondsToSelector:@selector(selectMenuAtIndex:menu:)]){
-            RicHorizonMenuItem *item = self.menuItems[self.currentSelectedIndex];
-            [self.delegate selectMenuAtIndex:self.currentSelectedIndex menu:item.itemValue];
+    self.isClickBtn = YES;
+    if(index < self.menus.count){
+        if(index != self.currentSelectedIndex){
+            
+            [self prepareContainerViewForIndex:index];
+            
+            [self selectOperationForIndex:index];
+            
+            if(self.currentSelectedIndex != index && self.lastSelectedIndex != index){
+                self.lastSelectedIndex = index;
+            }
+            self.currentSelectedIndex = index;
+            CGFloat width = CGRectGetWidth(self.contentCollectionView.bounds);
+            
+            [self.contentCollectionView scrollRectToVisible:CGRectMake(index * width, 0, width, CGRectGetHeight(self.contentCollectionView.bounds)) animated:YES];
+            
+            UIViewController *lastVC = [self.containerViews objectForKey:[self keyOfIndex:self.lastSelectedIndex]];
+            if(lastVC){
+                [lastVC.view removeFromSuperview];
+                [lastVC removeFromParentViewController];
+            }
+            
+            UIViewController *aViewController = [self prepareContainerViewForIndex:index];
+            [aViewController willMoveToParentViewController:self.parentVC];
+            [self.parentVC addChildViewController:aViewController];
+            [aViewController didMoveToParentViewController:self.parentVC];
+            [self.contentCollectionView addSubview:aViewController.view];
+            
+            
+            //            self.contentCollectionView.currentContainerView = aView;
+            if(self.delegate && [self.delegate respondsToSelector:@selector(selectMenuAtIndex:menu:containerViewController:)]){
+                RicHorizonMenuItem *item = self.menuItems[self.currentSelectedIndex];
+                [self.delegate selectMenuAtIndex:self.currentSelectedIndex menu:item.itemValue containerViewController:aViewController];
+            }
         }
     }
-    
-    if(self.isExpand){
-        [self shrinkOrExpand];
+}
+- (UIViewController *)prepareContainerViewForIndex:(NSInteger)index{
+    UIViewController *containerVC = nil;
+    if(index < self.menuItems.count){
+        RicHorizonMenuItem *item = self.menuItems[index];
+        containerVC = [self.containerViews objectForKey:[self keyOfIndex:index]];
+        if(!containerVC){
+            if(self.delegate && [self.delegate respondsToSelector:@selector(containerViewControllerAtIndex:menu:)]){
+                containerVC = [self.delegate containerViewControllerAtIndex:index menu:item.itemValue];
+                if(containerVC){
+                    containerVC.view.frame = CGRectMake(index*CGRectGetWidth(self.bounds), [RicHorizonMenu menuHeight], CGRectGetWidth(self.bounds), CGRectGetHeight(self.bounds)-[RicHorizonMenu menuHeight]);
+                }else{
+                    NSAssert(false, @"error usage");
+                }
+            }else{
+                containerVC = [[UIViewController alloc] init];
+                containerVC.view.backgroundColor = [UIColor grayColor];
+                containerVC.view.frame = CGRectMake(index*CGRectGetWidth(self.bounds), [RicHorizonMenu menuHeight], CGRectGetWidth(self.bounds), CGRectGetHeight(self.bounds)-[RicHorizonMenu menuHeight]);
+            }
+            //reset frame.
+            CGRect frame = CGRectMake(_containerViewInsets.left+CGRectGetMinX(containerVC.view.frame), self.containerViewInsets.top+CGRectGetMinY(containerVC.view.frame), CGRectGetWidth(containerVC.view.frame)-self.containerViewInsets.left-self.containerViewInsets.right, CGRectGetHeight(containerVC.view.bounds)-self.containerViewInsets.top-self.containerViewInsets.bottom);
+            containerVC.view.frame = frame;
+            
+            NSAssert(containerVC != nil, @"请返回一个容器视图控制器");
+            
+            [self.containerViews setObject:containerVC forKey:[self keyOfIndex:index]];
+        }
     }
+    return containerVC;
 }
-- (void)showMask
-{
-    self.mask.hidden = NO;
-}
-- (void)hideMask
-{
-    self.mask.hidden = YES;
+- (NSString *)keyOfIndex:(NSInteger)index{
+    return [NSString stringWithFormat:@"%ld",index];
 }
 - (NSInteger)rowsCount{
-    
-    if(self.isExpand){
-        NSInteger rowCount = self.menus.count/self.columnCount;
-        if(self.menus.count%self.columnCount > 0 ){
-            rowCount += 1;
-        }
-        
-        if(rowCount == 0){
-            rowCount = 1;
-        }
-        
-        return rowCount;
-    }else{
-        return 1;
-    }
+    return 1;
 }
 
-- (CGFloat)collectionViewExpandHeight{
-    
-    return self.rowsCount * self.cellHeight;
-    
++ (CGFloat)menuHeight{
+    return 36.0;
 }
-
 - (CGFloat)shrinkHeight{
     return self.cellHeight;
 }
 
 - (CGFloat)cellHeight {
-    return 46.0f;
-}
-
-- (CGFloat)horizonGap{
-    return screenWidth > 375.0f ? screenWidth/375.0f*40.0f:40.0f;
+    return [RicHorizonMenu menuHeight];
 }
 
 - (CGFloat)defaultHeight{
     return self.cellHeight;
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
-{
-    UITouch *touch = [touches anyObject];
-    CGPoint location = [touch locationInView:self];
-    if(CGRectContainsPoint(CGRectMake(0, CGRectGetMinY(self.scrollView.frame), CGRectGetWidth(self.frame), CGRectGetHeight(self.scrollView.frame)), location) == NO){
-        [self shrinkOrExpand];
+- (void)makeRefreshStatus{
+    if(self.delegate && [self.delegate respondsToSelector:@selector(indexsForShowStatus)]){
+        NSArray *indexs = [self.delegate indexsForShowStatus];
+        [self.cells enumerateObjectsUsingBlock:^(RicHorizonMenuItemCell * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if([indexs containsObject:@(idx)]){
+                if(self.statusStyle == HorizonMenuStatusStyleRedDot){
+                    [obj showBadge];
+                }else if(self.statusStyle == HorizonMenuStatusStyleCompelete){
+                    obj.compeleteIcon.hidden = NO;
+                }
+            }else{
+                if(self.statusStyle == HorizonMenuStatusStyleRedDot){
+                    [obj clearBadge];
+                    
+                }else if(self.statusStyle == HorizonMenuStatusStyleCompelete){
+                    obj.compeleteIcon.hidden = YES;
+                }
+            }
+        }];
     }
 }
 

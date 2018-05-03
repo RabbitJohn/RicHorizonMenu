@@ -1,18 +1,18 @@
 //
-//  RicForumAllGroupFilterItemView.h
+//  ForumAllGroupFilterItemView.h
 //  john
 //
-//  Created by rice on 16/4/13.
-//  Copyright © 2016年 rice. All rights reserved.
+//  Created by john on 16/4/13.
+//  Copyright © 2016年 john. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 #import "RicHorizonMenuItemCellDataSource.h"
+#import "RicHorizonMenuItem.h"
 
 @class RicHorizonMenuItemCell;
-@class RicHorizonMenuItem;
 
-@protocol RicHorizonMenuItemDelegate <NSObject>
+@protocol HorizonMenuItemDelegate <NSObject>
 
 @optional
 
@@ -26,11 +26,12 @@
 
 @property (nonatomic, assign) NSInteger index;
 
-@property (nonatomic, weak) id <RicHorizonMenuItemDelegate> delegate;
+@property (nonatomic, weak) id <HorizonMenuItemDelegate> delegate;
 
 @property (nonatomic, strong) UIColor *highlightedColor;
 
 @property (nonatomic, strong) UIColor *normalColor;
 
+@property (nonatomic, strong, readonly) UIImageView *compeleteIcon;
 
 @end

@@ -8,42 +8,59 @@
 
 #import <UIKit/UIKit.h>
 #import "RicHorizonMenuItemCell.h"
-#import "RicHorizonMenuContentCell.h"
+
+typedef NS_ENUM(NSInteger, HorizonMenuStatusStyle) {
+    HorizonMenuStatusStyleRedDot,
+    HorizonMenuStatusStyleCompelete
+};
 
 @protocol RicHorizonMenuDelegate <NSObject>
 
 @optional
 
-// 配置tableView 比如配置tableView的背景,配置下来刷新和加载更多。
-- (void)configTableView:(UITableView *)tableView ofMenuIndex:(NSInteger)menuIndex;
-
 // 选中某个菜单后做的事情
-- (void)selectMenuAtIndex:(NSInteger)index menu:(id)menu;
+- (void)selectMenuAtIndex:(NSInteger)index menu:(id <RicHorizonMenuItemDataSource>)menu containerViewController:(UIViewController *)aViewController;
+
+// 如果不是tableView则内容视图使用这个方法返回对应的视图
+- (UIViewController *)containerViewControllerAtIndex:(NSInteger)index menu:(id <RicHorizonMenuItemDataSource>)menu;
+
+- (NSArray <NSNumber *>*)indexsForShowStatus;
 
 @end
 
 /// 全部小组筛选
 @interface RicHorizonMenu : UIView
 
-@property (nonatomic, assign, readonly) BOOL supportExpand;
+@property (nonatomic, strong, readonly) UIViewController *parentVC;
+@property (nonatomic, strong) NSArray <id <RicHorizonMenuItemDataSource>>*menus;
 
 @property (nonatomic, weak) id <RicHorizonMenuDelegate> delegate;
 
-@property (nonatomic, strong) NSArray <id <RicHorizonMenuItemDataSource>>*menus;
-
-@property (nonatomic, assign) CGFloat expandHeight;
-
-@property (nonatomic, readonly) CGFloat defaultHeight;
-
-@property (nonatomic, readonly) NSInteger currentSelectedIndex;
 
 @property (nonatomic, strong) UIColor *menuBackgroundColor;
 @property (nonatomic, strong) UIColor *tagNormalColor;
 @property (nonatomic, strong) UIColor *tagHighlightedColor;
-@property (nonatomic, strong) UIColor *maskColor;
+@property (nonatomic, assign) UIEdgeInsets containerViewInsets;
+@property (nonatomic, assign, readonly) BOOL supportExpand;
+@property (nonatomic, assign) CGFloat contentHeight;
+@property (nonatomic, readonly) CGFloat defaultHeight;
+@property (nonatomic, assign) HorizonMenuStatusStyle statusStyle;
 
-- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand;
+@property (nonatomic, readonly) NSInteger currentSelectedIndex;
 
-- (void)updateExtendProperties:(CGFloat)expandHeight menuBackgroundColor:(UIColor *)bgColor tagNormalColor:(UIColor *)tagNormalColor tagHighlightedColor:(UIColor *)tagHighlightedColor;
+
+- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand contentViewHeight:(CGFloat)contentViewHeight contentViewStyle:(UITableViewStyle)tableViewStyle delegate:(id <RicHorizonMenuDelegate>)delegat parentVC:(UIViewController *)parentVC;
+
+- (instancetype)initWithFrame:(CGRect)frame supportExpand:(BOOL)supportExpand itemValues:(NSArray <id <RicHorizonMenuItemDataSource>>*)itemValues contentViewHeight:(CGFloat)contentViewHeight contentViewStyle:(UITableViewStyle)tableViewStyle delegate:(id <RicHorizonMenuDelegate>)delegate parentVC:(UIViewController *)parentVC;
+
++ (RicHorizonMenu *)menuWithJsonFile:(NSString *)jsonFileConfig contentViewHeight:(CGFloat)contentViewHeight contentViewStyle:(UITableViewStyle)tableViewStyle delegate:(id <RicHorizonMenuDelegate>)delegate parentVC:(UIViewController *)parentVC;
+
+- (void)updateExtendProperties:(CGFloat)contentHeight menuBackgroundColor:(UIColor *)bgColor tagNormalColor:(UIColor *)tagNormalColor tagHighlightedColor:(UIColor *)tagHighlightedColor;
+
+- (void)updateCurrentSelectedIndex:(NSUInteger)currentSelectedIndex;
+
++ (CGFloat)menuHeight;
+
+- (void)makeRefreshStatus;
 
 @end

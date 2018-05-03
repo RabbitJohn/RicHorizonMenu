@@ -12,7 +12,7 @@
 #import "RicHorizonMenu.h"
 
 
-@interface ViewController ()//<UITableViewDataSource,UITableViewDelegate>
+@interface ViewController ()<RicHorizonMenuDelegate>
 
 @end
 
@@ -20,6 +20,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.edgesForExtendedLayout = UIRectEdgeNone;
+    self.title = @"menu demo";
     
     NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"zone" ofType:@"json"]]];
     
@@ -37,17 +39,25 @@
     allZone.name = @"所有";
     [theZones insertObject:allZone atIndex:0];
     
-    RicHorizonMenu *menu = [[RicHorizonMenu alloc] initWithFrame:CGRectMake(0, 64.0f, CGRectGetWidth(self.view.bounds), CGRectGetHeight(self.view.bounds)-64.0f) supportExpand:YES];
-    
-    [menu updateExtendProperties:CGRectGetHeight(self.view.bounds)-64.0f menuBackgroundColor:[UIColor whiteColor] tagNormalColor:[UIColor lightGrayColor] tagHighlightedColor:[UIColor redColor]];
-    
-    menu.menus = theZones;
+    RicHorizonMenu *menu = [RicHorizonMenu menuWithJsonFile:nil contentViewHeight:CGRectGetHeight(self.view.bounds)-36 contentViewStyle:UITableViewStylePlain delegate:self parentVC:self];
+    menu.menus =  theZones;
     
     [self.view addSubview:menu];
     
-    
     // Do any additional setup after loading the view, typically from a nib.
 }
+
+- (void)selectMenuAtIndex:(NSInteger)index menu:(id <RicHorizonMenuItemDataSource>)menu containerViewController:(UIViewController *)aViewController{
+    NSLog(@"click at %ld",index);
+}
+
+// 如果不是tableView则内容视图使用这个方法返回对应的视图
+- (UIViewController *)containerViewControllerAtIndex:(NSInteger)index menu:(id <RicHorizonMenuItemDataSource>)menu{
+    UIViewController *vc = [UIViewController new];
+    
+    return vc;
+}
+
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
